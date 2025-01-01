@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "209065904592",
+    "project_id": "travel-dating-app",
+    "storage_bucket": "travel-dating-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:209065904592:android:d77121224db666b15c91d5",
+        "android_client_info": {
+          "package_name": "com.example.travel_dating_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "209065904592-so4iaqbft8cbbl8hjbfp3mprs4u9q53d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.travel_dating_app",
+            "certificate_hash": "21734d6a69b1040c8d87c6fb3148e220be41682f"
+          }
+        },
+        {
+          "client_id": "209065904592-uv3ssc199n3fpgdgenimfj9uq7et6n6m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBufS5n2UjIYivw-3BVNC_t2bTtAyeCoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "209065904592-uv3ssc199n3fpgdgenimfj9uq7et6n6m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "209065904592-i53ke4l97vhn6vehmumsvl2bovurshvf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.travelDatingApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
