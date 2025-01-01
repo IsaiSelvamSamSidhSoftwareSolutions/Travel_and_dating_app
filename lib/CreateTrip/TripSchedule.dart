@@ -1,8 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-
+import 'SelectTransport.dart';
 class TripDetailsScreen extends StatefulWidget {
+  final String? imagePath;
+  final String? tripTitle;
+  final String? tripDetails;
+  final DateTime? startDate;
+  final DateTime? endDate;
+
+  TripDetailsScreen({
+    this.imagePath,
+    this.tripTitle,
+    this.tripDetails,
+    this.startDate,
+    this.endDate,
+  }) {
+    // Print all arguments to the console
+    print('Image Path: $imagePath');
+    print('Trip Title: $tripTitle');
+    print('Trip Details: $tripDetails');
+    print('Start Date: $startDate');
+    print('End Date: $endDate');
+  }
+
   @override
   _TripDetailsScreenState createState() => _TripDetailsScreenState();
 }
@@ -351,16 +372,26 @@ class _TripDetailsScreenState extends State<TripDetailsScreen>
                       Text("Add Transport"),
                     ],
                   ),
-                  Column(
-                    children: [
-                      Image.network(
-                        'https://s3-alpha-sig.figma.com/img/ae24/129a/f22ce81acff12db8118e903d4365c563?Expires=1736726400&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=nJaC-uOTIYgnA9jhtQPmsh~1qM6N0a1qpP9JcgaeL9AZVfzfmVRGlzZooxfsu5SQ~FH5Rb1KO8BxsJuiGk7BMWEmB-W3Lm1sbj~KXZab77uXy32L6eljzUMThpKluW0OiJU2sGKVO585w34oXAxFkMKuAC1NjVpusxiC5pffp~BQwEI~ZOp07KODSTp1isQudpEgMKAa~YqfzLLg7SSoYK-TJUegwApw8JVYZTfofcNd177Nw043x2EW7vl-Qn8RaHQf-XIoE1Xz4aA9BzqoKwMWgKVRYsc44vesv8BwVMEwlsjjTm5ZsS3Vu7zh-wirJDWDq73yo9qJWValnPjLWQ__',
-                        height: 80.0,
-                      ),
-                      SizedBox(height: 8.0),
-                      Text("Add Driver"),
-                    ],
-                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TransportSelectionScreen(),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        Image.network(
+                          'https://s3-alpha-sig.figma.com/img/ae24/129a/f22ce81acff12db8118e903d4365c563?Expires=1736726400&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=nJaC-uOTIYgnA9jhtQPmsh~1qM6N0a1qpP9JcgaeL9AZVfzfmVRGlzZooxfsu5SQ~FH5Rb1KO8BxsJuiGk7BMWEmB-W3Lm1sbj~KXZab77uXy32L6eljzUMThpKluW0OiJU2sGKVO585w34oXAxFkMKuAC1NjVpusxiC5pffp~BQwEI~ZOp07KODSTp1isQudpEgMKAa~YqfzLLg7SSoYK-TJUegwApw8JVYZTfofcNd177Nw043x2EW7vl-Qn8RaHQf-XIoE1Xz4aA9BzqoKwMWgKVRYsc44vesv8BwVMEwlsjjTm5ZsS3Vu7zh-wirJDWDq73yo9qJWValnPjLWQ__',
+                          height: 80.0,
+                        ),
+                        SizedBox(height: 8.0),
+                        Text("Add Driver"),
+                      ],
+                    ),
+                  )
                 ],
               ),
               SizedBox(height: 16.0),
