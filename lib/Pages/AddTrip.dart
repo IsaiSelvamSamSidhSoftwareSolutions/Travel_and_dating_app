@@ -60,12 +60,15 @@ class CreateTripPage extends StatelessWidget {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => CreateTripScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => CreateTripScreen(),
+                  ),
                 );
               },
               child: _buildOptionCard(
-                imageUrl: "https://s3-alpha-sig.figma.com/img/c82d/6e3c/da862b51ca2c77d062a9ce32475d7ce6?Expires=1735516800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=gsE7cH4vh01oaqJvleeO6Igi3F5TB~zVkIII0vmp93jflwqiyLpmqPxsYCJf7S5-WwudLUZ544X4w5eIMu4cr7oFypzVr0a4QsGao7MwRRPMIwsTmdcjCuj36DC588J-P0m0tgzYneJeXA9wxf2X-xY9uTgOVE~II4YfH~0WWZdaBfDVxG0BVKyCmykPWI0nsuVgezhG98DwnsCf1ACWL1iE5PTJ4U0Z00rHO4HVmj8kI3U80u7R1I5yCKWhOQ59SSXqaInP8eEgUuRS4-yoQwwcpC0Ss5Lu6ffkU5aDUCGeZbwIuyUa73Hmueb5B2d6iS0SH8q99hFxrcXN5umsSw__",
+                imagePath: "lib/assets/Trips/createtrip.png",
                 label: "Create A New Trip",
+                isNetwork: false,
               ),
             ),
             SizedBox(height: 40),
@@ -75,12 +78,16 @@ class CreateTripPage extends StatelessWidget {
                 // Add navigation logic for the "Request Join" screen
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => CreateTripScreen()), // Replace with the appropriate page
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        CreateTripScreen(), // Replace with the appropriate page
+                  ),
                 );
               },
               child: _buildOptionCard(
-                imageUrl: "https://s3-alpha-sig.figma.com/img/94c3/0306/1d0620d3a441ba702e25be0808bc34a6?Expires=1735516800&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=cAn8B99ftZNlmqf71ca0obtWCuZOtQcKW8moOQCidyrYF~G8sq-ydgoNMLAk1OeR9nJZSnJSlBi~Qg1t3jC6xM6t~DLOLplVHo3F~GRZTfnXH-PdaCgC7sRK6uLEXTooB1cGZaOzO~CK8ZSzvkxqb~iKLh6V1jBpKbHe1y1mVrXomUDFceH9fszmyr9~7nFcF0FA9XDYMGycXMsyolBc1JWK1cjh3qFFR6F96fb1lfGUlrkbA6f6I1pGCiITHv4JVikUL6a7QhRKJUpgGifYs4FXW5LoxHn0Rtor3OxkzDo2oIVtht2PJT7J-6cD5ErTagckHkKv1YHbAZB3uCeszw__",
+                imagePath: "lib/assets/Trips/requestojoin.png",
                 label: "Request Join",
+                isNetwork: false,
               ),
             ),
           ],
@@ -90,7 +97,8 @@ class CreateTripPage extends StatelessWidget {
   }
 
   // Reusable Option Card Widget
-  Widget _buildOptionCard({required String imageUrl, required String label}) {
+  Widget _buildOptionCard(
+      {required String imagePath, required String label, bool isNetwork = true}) {
     return Column(
       children: [
         Container(
@@ -108,8 +116,15 @@ class CreateTripPage extends StatelessWidget {
             ],
           ),
           child: Center(
-            child: Image.network(
-              imageUrl,
+            child: isNetwork
+                ? Image.network(
+              imagePath,
+              height: 70,
+              width: 70,
+              fit: BoxFit.contain,
+            )
+                : Image.asset(
+              imagePath,
               height: 70,
               width: 70,
               fit: BoxFit.contain,
@@ -129,7 +144,6 @@ class CreateTripPage extends StatelessWidget {
     );
   }
 }
-
 // Placeholder for "Request Join" navigation
 class PlaceholderWidget extends StatelessWidget {
   @override

@@ -281,6 +281,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   DateTime? _endDate;
   final TextEditingController _tripTitleController = TextEditingController();
   final TextEditingController _tripDetailsController = TextEditingController();
+  final TextEditingController _numberOfMembersController = TextEditingController();
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -308,6 +309,45 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         }
       });
     }
+  }
+
+  void _validateAndNavigate() {
+    if (_imagePath == null) {
+      _showSnackBar("Image is required");
+    } else if (_tripTitleController.text.isEmpty) {
+      _showSnackBar("Trip Title is required");
+    } else if (_tripDetailsController.text.isEmpty) {
+      _showSnackBar("Trip Details are required");
+    } else if (_numberOfMembersController.text.isEmpty) {
+      _showSnackBar("Number of Members is required");
+    } else if (_startDate == null) {
+      _showSnackBar("Start Date is required");
+    } else if (_endDate == null) {
+      _showSnackBar("End Date is required");
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TripDetailsScreen(
+            imagePath: _imagePath,
+            tripTitle: _tripTitleController.text,
+            tripDetails: _tripDetailsController.text,
+            startDate: _startDate,
+            endDate: _endDate,
+            numberOfMembers: _numberOfMembersController.text,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -344,11 +384,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                         ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.image_outlined,
-                          color: Colors.grey,
-                          size: 50.0,
-                        ),
+                        Icon(Icons.image_outlined, color: Colors.grey, size: 50.0),
                         SizedBox(height: 8.0),
                         Text(
                           "Add Image",
@@ -364,10 +400,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 ),
               ),
               SizedBox(height: 24.0),
-              Text(
-                "Trip Title",
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.0),
-              ),
+              Text("Trip Title", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.0)),
               SizedBox(height: 8.0),
               TextField(
                 controller: _tripTitleController,
@@ -382,16 +415,27 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 ),
               ),
               SizedBox(height: 16.0),
-              Text(
-                "Trip Details",
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.0),
-              ),
+              Text("Trip Details", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.0)),
               SizedBox(height: 8.0),
               TextField(
                 controller: _tripDetailsController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: "More details about the event come here",
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.0),
+              TextField(
+                controller: _numberOfMembersController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: "Number of Members",
                   filled: true,
                   fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
@@ -457,20 +501,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
               SizedBox(height: 24.0),
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TripDetailsScreen(
-                          imagePath: _imagePath,
-                          tripTitle: _tripTitleController.text,
-                          tripDetails: _tripDetailsController.text,
-                          startDate: _startDate,
-                          endDate: _endDate,
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: _validateAndNavigate,
                   child: Text("Continue"),
                 ),
               ),

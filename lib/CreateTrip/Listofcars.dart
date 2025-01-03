@@ -3,10 +3,34 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'car_details_screen.dart';
-
 class AvailableCarsScreen extends StatefulWidget {
+  final String? imagePath;
+  final String? tripTitle;
+  final String? tripDetails;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final TimeOfDay? startTime;
+  final TimeOfDay? endTime;
+  final String? numberofmembers;
+  final Map<String, dynamic> budget;
+  final List<Map<String, String>> schedule;
+
+  const AvailableCarsScreen({
+    Key? key,
+    this.imagePath,
+    this.tripTitle,
+    this.tripDetails,
+    this.startDate,
+    this.endDate,
+    this.startTime,
+    this.endTime,
+    this.numberofmembers,
+    required this.budget,
+    required this.schedule,
+  }) : super(key: key);
+
   @override
-  _AvailableCarsScreenState createState() => _AvailableCarsScreenState();
+  State<AvailableCarsScreen> createState() => _AvailableCarsScreenState();
 }
 
 class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
@@ -57,15 +81,17 @@ class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Available Cars',
-          style: TextStyle(color: Colors.black),
-        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        title: Text(
+          widget.tripTitle ?? "Available Cars",
+          style: TextStyle(color: Colors.black),
+        ),
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
@@ -73,25 +99,46 @@ class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
         padding: const EdgeInsets.all(16.0),
         child: GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // Two items per row
+            crossAxisCount: screenWidth > 600 ? 4 : 2, // Adjust for responsiveness
             mainAxisSpacing: 16.0,
             crossAxisSpacing: 16.0,
-            childAspectRatio: 0.8, // Aspect ratio for item cards
+            childAspectRatio: 0.7, // Adjust for better card fit
           ),
           itemCount: cars.length,
           itemBuilder: (context, index) {
             final car = cars[index];
             final imageUrl = car['images'].isNotEmpty
                 ? 'https://demo.samsidh.com/${car['images'][0].replaceAll(r'\\', '/')}'
-                : 'https://demo.samsidh.com/default-image.png';
-
+                : widget.imagePath; // Fallback to provided image
+            final carid = car['_id'];
             return GestureDetector(
               onTap: () {
+                // Navigate to details screen
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => CarDetailsScreen(carDetails: car),
-                  ),
+                    MaterialPageRoute(
+                      builder: (context) => CarDetailsScreen(
+                        carDetails: car,
+                        carId: carid,
+                        imagePath: widget.imagePath,
+                        tripTitle: widget.tripTitle,
+                        tripDetails: widget.tripDetails,
+                        startDate: widget.startDate,
+                        endDate: widget.endDate,
+                        startTime: widget.startTime,
+                        endTime: widget.endTime,
+                        numberofmembers: widget.numberofmembers,
+                        budget: (widget.budget.isNotEmpty && widget.budget is Map<String, dynamic>)
+                            ? widget.budget
+                            : {
+                          "total": 0.0,
+                          "breakdown": [
+                            {'category': 'Default', 'amount': 0.0},
+                          ],
+                        },
+                        schedule: widget.schedule,
+                      ),
+                    )
                 );
               },
               child: Container(
@@ -113,19 +160,23 @@ class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
                       borderRadius: BorderRadius.vertical(
                         top: Radius.circular(12.0),
                       ),
-                      child: Image.network(
-                        imageUrl,
+                      child: SizedBox(
                         height: 120.0,
                         width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(Icons.error, size: 50, color: Colors.red);
-                        },
-                        loadingBuilder: (context, child, progress) {
-                          return progress == null
-                              ? child
-                              : Center(child: CircularProgressIndicator());
-                        },
+                        child: Image.network(
+                          imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(Icons.error,
+                                size: 50, color: Colors.red);
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     Padding(
@@ -136,7 +187,7 @@ class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
                             car['name'] ?? 'Car Name',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16.0,
+                              fontSize: 14.0,
                             ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
@@ -154,15 +205,50 @@ class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
                     ),
                     Spacer(),
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child:ElevatedButton(
                         onPressed: () {
+                          // Print the arguments being passed
+                          print('Navigating to CarDetailsScreen with arguments:');
+                          print('Car ID: $carid');
+                          print('Car Details: $car');
+                          print('Image Path: ${widget.imagePath}');
+                          print('Trip Title: ${widget.tripTitle}');
+                          print('Trip Details: ${widget.tripDetails}');
+                          print('Start Date: ${widget.startDate}');
+                          print('End Date: ${widget.endDate}');
+                          print('Start Time: ${widget.startTime}');
+                          print('End Time: ${widget.endTime}');
+                          print('Number of Members: ${widget.numberofmembers}');
+                          print('Budget: ${widget.budget}');
+                          print('Schedule: ${widget.schedule}');
+
+                          // Navigate to CarDetailsScreen
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  CarDetailsScreen(carDetails: car),
-                            ),
+                              MaterialPageRoute(
+                                builder: (context) => CarDetailsScreen(
+                                  carDetails: car,
+                                  carId: carid,
+                                  imagePath: widget.imagePath,
+                                  tripTitle: widget.tripTitle,
+                                  tripDetails: widget.tripDetails,
+                                  startDate: widget.startDate,
+                                  endDate: widget.endDate,
+                                  startTime: widget.startTime,
+                                  endTime: widget.endTime,
+                                  numberofmembers: widget.numberofmembers,
+                                  budget: (widget.budget.isNotEmpty && widget.budget is Map<String, dynamic>)
+                                      ? widget.budget
+                                      : {
+                                    "total": 0.0,
+                                    "breakdown": [
+                                      {'category': 'Default', 'amount': 0.0},
+                                    ],
+                                  },
+                                  schedule: widget.schedule,
+                                ),
+                              )
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -175,7 +261,7 @@ class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
                           'View Details',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 14.0,
+                            fontSize: 12.0,
                           ),
                         ),
                       ),
@@ -191,3 +277,5 @@ class _AvailableCarsScreenState extends State<AvailableCarsScreen> {
     );
   }
 }
+
+

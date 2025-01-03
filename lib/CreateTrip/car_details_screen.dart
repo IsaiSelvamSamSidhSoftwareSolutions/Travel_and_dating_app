@@ -1,15 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:travel_dating/CreateTrip/Listofdrivers.dart';
 
 class CarDetailsScreen extends StatelessWidget {
-  final dynamic carDetails;
+  final Map<String, dynamic> carDetails;
+  final String carId;
+  final String? imagePath;
+  final String? tripTitle;
+  final String? tripDetails;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final TimeOfDay? startTime;
+  final TimeOfDay? endTime;
+  final String? numberofmembers;
+  final Map<String, dynamic> budget;
+  final List<Map<String, String>> schedule;
 
-  CarDetailsScreen({required this.carDetails});
+  const CarDetailsScreen({
+    Key? key,
+    required this.carDetails,
+    required this.carId,
+    this.imagePath,
+    this.tripTitle,
+    this.tripDetails,
+    this.startDate,
+    this.endDate,
+    this.startTime,
+    this.endTime,
+    this.numberofmembers,
+    required this.budget,
+    required this.schedule,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final String imageUrl = carDetails['images'].isNotEmpty
         ? 'https://demo.samsidh.com/${carDetails['images'][0].replaceAll(r'\\', '/')}'
-        : 'https://demo.samsidh.com/default-image.png';
+        : 'https://demo.samsidh.com/uploads/driver/66c88aeea5b3d31dc1b0bb4b/1735806345968-OIP%20(2).jpg';
 
     return Scaffold(
       appBar: AppBar(
@@ -138,10 +164,40 @@ class CarDetailsScreen extends StatelessWidget {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      // Handle selection
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DriverList(
+                            carDetails: carDetails, // Replace with the actual carDetails map
+                            carId: carId, // Replace with the actual carId string
+                            imagePath: imagePath ?? 'assets/default_image.png', // Default if null
+                            tripTitle: tripTitle ?? 'Default Trip Title', // Default if null
+                            tripDetails: tripDetails ?? 'Default Trip Details', // Default if null
+                            startDate: startDate, // Pass null or actual DateTime
+                            endDate: endDate, // Pass null or actual DateTime
+                            startTime: startTime, // Pass null or actual TimeOfDay
+                            endTime: endTime, // Pass null or actual TimeOfDay
+                            numberofmembers: numberofmembers ?? '1', // Default if null
+                            budget: budget.isNotEmpty
+                                ? budget
+                                : {
+                              "total": 0.0,
+                              "breakdown": [
+                                {'category': 'Default', 'amount': 0.0}
+                              ],
+                            },
+                            schedule: schedule.isNotEmpty
+                                ? schedule
+                                : [
+                              {'day': 'Default', 'activity': 'Default Activity'}
+                            ],
+                          ),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.pinkAccent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
