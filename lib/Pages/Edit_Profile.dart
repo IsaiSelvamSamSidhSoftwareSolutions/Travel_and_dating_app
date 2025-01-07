@@ -6,11 +6,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 
-void main() async {
-  await GetStorage.init();
-  runApp(EditProfileApp());
-}
-
 class EditProfileApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -83,7 +78,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       debugPrint("Fetch API Response Status: ${response.statusCode}");
-      debugPrint("Fetch API Response Body: ${response.body}");
+      debugPrint("Fetch API Response Body FOR USER PROFILE: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body)['user'];

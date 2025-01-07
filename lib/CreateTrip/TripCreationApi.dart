@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -5,6 +6,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'driver.dart';
+import 'dart:io';
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
+
 class CreateTrip extends StatefulWidget {
   final Driver driver;
   final List<Map<String, String>> schedule;
@@ -42,131 +47,196 @@ class CreateTrip extends StatefulWidget {
 class _CreateTripState extends State<CreateTrip> {
   final GetStorage _storage = GetStorage();
   bool _isPosting = false;
-  final List<String> _quotes = [
-    "Life is short, and the world is wide.",
-    "Travel far enough to meet yourself.",
-    "Wander often, wonder always.",
-    "Collect moments, not things.",
-  ];
 
   Future<void> _createTrip() async {
-    // Retrieve stored values
     final String jwtToken = _storage.read('jwttoken') ?? '';
     final String username = _storage.read('username') ?? '';
     final String email = _storage.read('email') ?? '';
 
-    // Validate the required values
     if (jwtToken.isEmpty || username.isEmpty || email.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Authentication data is missing!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      _showToast("Authentication data is missing!");
       return;
     }
 
-    // Prepare API request data
-    final Map<String, dynamic> body = {
-      'title': widget.tripTitle ?? 'N/A',
-      'details': widget.tripDetails ?? 'N/A',
-      'startDate': widget.startDate?.toIso8601String() ?? '',
-      'endDate': widget.endDate?.toIso8601String() ?? '',
-      'numberOfPersons': widget.numberofmembers ?? '0',
-      'persons': jsonEncode(["66c88aeea5b3d31dc1b0bb4b", "66c89643a5b3d31dc1b0bb51"]),
-      'schedule': jsonEncode(widget.schedule),
-      'budget': jsonEncode(widget.budget),
-      'isPrivate': 'true',
-      'drivers': jsonEncode([widget.driver.id]),
-      'transports': jsonEncode([widget.carId]),
-    };
+    if (widget.imagePath == null || widget.imagePath!.isEmpty) {
+      _showToast("Image path is missing!");
+      return;
+    }
 
-    setState(() {
-      _isPosting = true;
-    });
+    final file = File(widget.imagePath!);
+    if (!file.existsSync()) {
+      _showToast("Image file does not exist!");
+      return;
+    }
 
-    Fluttertoast.showToast(
-      msg: _quotes[DateTime.now().second % _quotes.length],
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.blue,
-      textColor: Colors.white,
-    );
+    final mimeType = lookupMimeType(widget.imagePath!);
+    if (mimeType == null || !mimeType.startsWith('image/')) {
+      _showToast("Invalid file type! Only image files are allowed.");
+      return;
+    }
+
+    setState(() => _isPosting = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('https://demo.samsidh.com/api/v1/trips/createTrip'),
-        headers: {
-          'Authorization': 'Bearer $jwtToken',
-          'email': email,
-          'username': username,
-        },
-        body: body,
+      final uri = Uri.parse('https://demo.samsidh.com/api/v1/trips/createTrip');
+      final request = http.MultipartRequest('POST', uri);
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $jwtToken',
+        'email': email,
+        'username': username,
+      });
+
+      request.fields['title'] = widget.tripTitle ?? 'N/A';
+      request.fields['details'] = widget.tripDetails ?? 'N/A';
+      request.fields['startDate'] = widget.startDate?.toIso8601String() ?? '';
+      request.fields['endDate'] = widget.endDate?.toIso8601String() ?? '';
+      request.fields['numberOfPersons'] = widget.numberofmembers ?? '0';
+      request.fields['persons'] =
+          jsonEncode(["66c88aeea5b3d31dc1b0bb4b", "66c89643a5b3d31dc1b0bb51"]);
+      request.fields['schedule'] = jsonEncode(widget.schedule);
+      request.fields['budget'] = jsonEncode(widget.budget);
+      request.fields['isPrivate'] = 'true';
+      request.fields['drivers'] = jsonEncode([widget.driver.id]);
+      request.fields['transports'] = jsonEncode([widget.carId]);
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'images',
+          widget.imagePath!,
+          contentType: MediaType.parse(mimeType),
+        ),
       );
 
-      print("API Response: ${response.body}");
+      final response = await request.send();
 
       if (response.statusCode == 201) {
-        final responseData = jsonDecode(response.body);
-        _showSuccessAlert(responseData);
+        final responseData = await response.stream.bytesToString();
+        _showSuccessAlert("Trip Created Sucessfully");
+        print("API SUCESS REPONSE ${jsonDecode(responseData)}");
       } else {
+        final errorData = await response.stream.bytesToString();
         print("API Error: ${response.statusCode}");
-        print("Response: ${response.body}");
-        Fluttertoast.showToast(
-          msg: "Failed to create trip. Check API response.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-        );
+        print("Error Response: $errorData");
+        _showToast("Failed to create trip. Check API response.");
       }
     } catch (e) {
       print("Exception: $e");
-      Fluttertoast.showToast(
-        msg: "An error occurred. Please try again!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      _showToast("An error occurred. Please try again!");
     } finally {
-      setState(() {
-        _isPosting = false;
-      });
+      setState(() => _isPosting = false);
     }
   }
 
-  void _showSuccessAlert(Map<String, dynamic> responseData) {
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
+  }
+
+
+  Widget _buildDriverDetails() {
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(50),
+          child: Image.network(
+            widget.imagePath ?? '',
+            height: 100,
+            width: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 100),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          widget.driver.name,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+  void _showSuccessAlert(String message) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Trip Created Successfully!"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Trip Title: ${responseData['title'] ?? 'N/A'}"),
-              Text("Start Date: ${responseData['startDate'] ?? 'N/A'}"),
-              Text("End Date: ${responseData['endDate'] ?? 'N/A'}"),
-              Text("Number of Persons: ${responseData['numberOfPersons'] ?? 'N/A'}"),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text("Success"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
+        ],
+      ),
+    );
+  }
+  Widget _buildBudgetDetails() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Budget Breakdown",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            ...List.generate(widget.budget['breakdown'].length, (index) {
+              final item = widget.budget['breakdown'][index];
+              return ListTile(
+                title: Text("Day ${index + 1}: ${item['category']}"),
+                trailing: Text("₹${item['amount']}"),
+              );
+            }),
+            const Divider(),
+            ListTile(
+              title: const Text("Total"),
+              trailing: Text("₹${widget.budget['total']}"),
             ),
           ],
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleDetails() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Schedule",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            ...widget.schedule.map((activity) {
+              return ListTile(
+                title: Text("Date: ${activity['date']}"),
+                subtitle: Text("Activity: ${activity['activity']}"),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Create Trip"),
         backgroundColor: Colors.pink,
@@ -176,32 +246,75 @@ class _CreateTripState extends State<CreateTrip> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Trip Summary",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text("Driver: ${widget.driver.id}"),
-            Text("Car ID: ${widget.carId}"),
-            Text("Trip Title: ${widget.tripTitle ?? 'N/A'}"),
-            Text("Trip Details: ${widget.tripDetails ?? 'N/A'}"),
-            Text("Start Date: ${widget.startDate ?? 'N/A'}"),
-            Text("End Date: ${widget.endDate ?? 'N/A'}"),
-            Text("Number of Members: ${widget.numberofmembers ?? 'N/A'}"),
-            Text("Budget: ${widget.budget['total']}"),
+            _buildTripSummaryCard(),
+            const SizedBox(height: 16),
+            _buildBudgetDetails(),
+            const SizedBox(height: 16),
+            _buildScheduleDetails(),
+            const SizedBox(height: 16),
+            _buildDriverDetailsSection(),
             const SizedBox(height: 20),
-            _isPosting
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton.icon(
-              onPressed: _createTrip,
-              icon: const Icon(FontAwesomeIcons.paperPlane),
-              label: const Text("Post Trip"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-            ),
+            _buildPostTripButton(),
           ],
         ),
       ),
     );
   }
-}
 
+  Widget _buildTripSummaryCard() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Trip Title: ${widget.tripTitle ?? 'N/A'}",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text("Trip Details: ${widget.tripDetails ?? 'N/A'}"),
+            const SizedBox(height: 8),
+            Text("Start Date: ${widget.startDate?.toIso8601String() ?? 'N/A'}"),
+            const SizedBox(height: 8),
+            Text("End Date: ${widget.endDate?.toIso8601String() ?? 'N/A'}"),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriverDetailsSection() {
+    return Column(
+      children: [
+        const Center(
+          child: Text(
+            "Driver Details",
+            style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Center(child: _buildDriverDetails()),
+      ],
+    );
+  }
+
+  Widget _buildPostTripButton() {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: _isPosting ? null : _createTrip,
+        icon: const Icon(FontAwesomeIcons.paperPlane),
+        label: const Text("Post Trip"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.pink,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15)),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+      ),
+    );
+  }
+}
